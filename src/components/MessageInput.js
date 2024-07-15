@@ -3,7 +3,7 @@ import axios from 'axios'
 import React, { useEffect, useRef, useState } from 'react'
 const MicRecorder = require('mic-recorder-to-mp3')
 
-const MessageInput = ({ onSendMessage }) => {
+const MessageInput = ({ onSendMessage, messages }) => {
     const btn = useRef()
     const [message, setMessage] = useState('')
     const [recorder] = useState(new MicRecorder({ bitRate: 128 }))
@@ -26,16 +26,27 @@ const MessageInput = ({ onSendMessage }) => {
             .then(async ([buffer, blob]) => {
                 const blobURL = URL.createObjectURL(blob)
                 const formData = new FormData();
+                formData.append('items', JSON.stringify(messages))
                 formData.append('files', blob, 'test.mp3')
                 onSendMessage([{ text: blobURL, sender: 'Voice' }])
                 setIsRecording(false)
                 try {
-                    const response = await axios.post('http://localhost:8000/', formData, {
-                        headers: {
-                            'Content-Type': 'multipart/form-data'
-                        }
-                    });
-                    onSendMessage([{ text: blobURL, sender: 'Voice' }, { text: response.data, sender: 'AI' }])
+                    if(!window.localStorage.getItem('token')) {
+                        const response = await axios.post('http://localhost:8000/', formData, {
+                            headers: {
+                                'Content-Type': 'multipart/form-data'
+                            }
+                        })
+                        onSendMessage([{ text: blobURL, sender: 'Voice' }, { text: response.data, sender: 'AI' }])
+                    } else {
+                        const response = await axios.post('http://localhost:8000/auth/voice', formData, {
+                            headers: {
+                                'Content-Type': 'multipart/form-data',
+                                Authorization: `${window.localStorage.getItem('token')}`
+                            }
+                        })
+                        onSendMessage([{ text: blobURL, sender: 'Voice' }, { text: response.data, sender: 'AI' }])
+                    }
                 } catch (error) {
                     console.error('Error uploading file:', error);
                 }
@@ -45,14 +56,40 @@ const MessageInput = ({ onSendMessage }) => {
 
     const handleSubmit = (e) => {
         e.preventDefault()
-        if (message.trim() !== '') {
-            onSendMessage([{ text: message, sender: 'User' }])
-            setMessage('')
-            axios.get(`http://localhost:8000/text/?q=${message}`)
-                .then(result => {
-                    onSendMessage([{ text: message, sender: 'User' }, { text: result.data, sender: 'AI' }])
+        if (!window.localStorage.getItem('token')) {
+            if (message.trim() !== '') {
+                onSendMessage([{ text: message, sender: 'User' }])
+                setMessage('')
+                axios.post(`http://localhost:8000/text/?q=${message}`, {
+                    items: messages,
+                    q: message
                 })
+                    .then(result => {
+                        onSendMessage([{ text: message, sender: 'User' }, { text: result.data, sender: 'AI' }])
+                    })
+            }
+        } else {
+            if (message.trim() !== '') {
+                onSendMessage([{ text: message, sender: 'User' }])
+                setMessage('')
+                axios.post(`http://localhost:8000/auth/?q=${message}`, {
+                    items: messages,
+                    q: message
+                }, {
+                    headers: {
+                        Authorization: `${window.localStorage.getItem('token')}`
+                    }
+                })
+                    .then(result => {
+                        onSendMessage([{ text: message, sender: 'User' }, { text: result.data, sender: 'AI' }])
+                    })
+            }
         }
+        // axios.post('http://localhost:8000/voice', {
+        //     items: messages
+        // }).then(result => {
+        //     console.log(result)
+        // })
     }
 
     const imgChange = async (event) => {
