@@ -9,21 +9,21 @@ const MessageList = ({ messages, number }) => {
                 <div key={index} className="message-item">
                     {message.sender == 'User' &&
                         <>
-                            <span>User :</span>
-                            <p>{message.text}</p>
+                            <div style={{ textAlign: 'end' }}><span className='text_box'>{message.text}</span></div>
                         </>
                     }
                     {message.sender == 'Voice' &&
                         <>
-                            <span>User :</span>
-                            <audio src={message.text} controls="controls" />
+                            {/* <span>User : </span> */}
+                            <div style={{ textAlign: 'end' }}><audio src={message.text} controls="controls" /></div>
                         </>
                     }
                     {message.sender == 'AI' &&
-                        <>
-                            <div style={{ textAlign: 'end' }}>: AI</div>
-                            <p style={{ textAlign: 'end' }}>{message.text}</p>
-                        </>
+                        <div>
+                                <span>AI : </span>
+                                <span className='text_box_ai'>{message.text}</span>
+                            {/* <p style={{ textAlign: 'end' }}>{message.text}</p> */}
+                        </div>
                     }
                 </div>
             ))}
