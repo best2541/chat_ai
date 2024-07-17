@@ -40,7 +40,7 @@ const MessageInput = ({ onSendMessage, messages }) => {
                                 'Content-Type': 'multipart/form-data'
                             }
                         })
-                        onSendMessage([{ text: blobURL, sender: 'Voice' }, { text: response.data, sender: 'AI' }])
+                        onSendMessage([{ text: blobURL, sender: 'Voice' }, { text: response.data.output, sender: 'AI' }])
                     } else {
                         const response = await axios.post('http://localhost:8000/chat/auth/voice', formData, {
                             headers: {
@@ -48,7 +48,7 @@ const MessageInput = ({ onSendMessage, messages }) => {
                                 Authorization: `${window.localStorage.getItem('token')}`
                             }
                         })
-                        onSendMessage([{ text: blobURL, sender: 'Voice' }, { text: response.data, sender: 'AI' }])
+                        onSendMessage([{ text: blobURL, sender: 'Voice' }, { text: response.data.output, sender: 'AI' }])
                     }
                 } catch (error) {
                     console.error('Error uploading file:', error);
@@ -63,19 +63,19 @@ const MessageInput = ({ onSendMessage, messages }) => {
             if (message.trim() !== '') {
                 onSendMessage([{ text: message, sender: 'User' },{ text: 'กำลังพิมพ์...', sender: 'AI' }])
                 setMessage('')
-                axios.post(`http://localhost:8000/chat/text/?q=${message}`, {
+                axios.post(`http://localhost:8000/chat/text`, {
                     items: messages,
                     q: message
                 })
                     .then(result => {
-                        onSendMessage([{ text: message, sender: 'User' }, { text: result.data, sender: 'AI' }])
+                        onSendMessage([{ text: message, sender: 'User' }, { text: result.data.output, sender: 'AI' }])
                     })
             }
         } else {
             if (message.trim() !== '') {
                 onSendMessage([{ text: message, sender: 'User' },{ text: 'กำลังพิมพ์...', sender: 'AI' }])
                 setMessage('')
-                axios.post(`http://localhost:8000/chat/auth/?q=${message}`, {
+                axios.post(`http://localhost:8000/chat/auth`, {
                     items: messages,
                     q: message
                 }, {
@@ -84,7 +84,7 @@ const MessageInput = ({ onSendMessage, messages }) => {
                     }
                 })
                     .then(result => {
-                        onSendMessage([{ text: message, sender: 'User' }, { text: result.data, sender: 'AI' }])
+                        onSendMessage([{ text: message, sender: 'User' }, { text: result.data.output, sender: 'AI' }])
                     })
             }
         }
@@ -106,7 +106,7 @@ const MessageInput = ({ onSendMessage, messages }) => {
                     'Content-Type': 'multipart/form-data'
                 }
             });
-            console.log('File uploaded successfully:', response.data);
+            console.log('File uploaded successfully:', response.data.output);
         } catch (error) {
             console.error('Error uploading file:', error);
         }
